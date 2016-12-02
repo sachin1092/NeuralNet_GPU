@@ -33,10 +33,10 @@ typedef struct {
 
 /*** User-level functions ***/
 
-void bpnn_initialize();
+void bpnn_initialize(int seed);
 
-BPNN *bpnn_create();
-void bpnn_free();
+BPNN *bpnn_create(int, int, int);
+void bpnn_free(BPNN *);
 
 void bpnn_train();
 void bpnn_feedforward();
@@ -44,5 +44,6 @@ void bpnn_feedforward();
 void bpnn_save();
 BPNN *bpnn_read();
 
+void backprop_face();
 
 #endif
