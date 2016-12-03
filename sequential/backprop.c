@@ -96,6 +96,7 @@ int m, n;
   for (i = 0; i <= m; i++) {
     for (j = 0; j <= n; j++) {
      w[i][j] = (float) rand()/RAND_MAX;
+     // printf("\nw[%d][%d] = %f", i, j, w[i][j]);
     //  w[i][j] = dpn1();
     }
   }
@@ -223,11 +224,15 @@ int n_in, n_hidden, n_out;
   bpnn_zero_weights(newnet->input_weights, n_in, n_hidden);
 #else
   bpnn_randomize_weights(newnet->input_weights, n_in, n_hidden);
+
 #endif
   bpnn_randomize_weights(newnet->hidden_weights, n_hidden, n_out);
   bpnn_zero_weights(newnet->input_prev_weights, n_in, n_hidden);
   bpnn_zero_weights(newnet->hidden_prev_weights, n_hidden, n_out);
   bpnn_randomize_row(newnet->target, n_out);
+
+  
+
   return (newnet);
 }
 
@@ -239,6 +244,13 @@ int n1, n2;
   float sum;
   int j, k;
 
+  for (k = 0 ; k <= n1 ; k++)
+    printf("\nl1[%d] = %f", k, l1[k]);
+
+  for (j = 1 ; j <= n2 ; j++)
+    for (k = 0 ; k <= n1 ; k++)
+      printf("\nconn[%d][%d] = %f", k, j, conn[k][j]);
+
   /*** Set up thresholding unit ***/
   l1[0] = 1.0;
   /*** For each unit in second layer ***/
@@ -248,8 +260,10 @@ int n1, n2;
     sum = 0.0;
     for (k = 0; k <= n1; k++) {	
       sum += conn[k][j] * l1[k]; 
+      // printf("\nconn[%d][%d] * l1[%d] = %f * %f", k, j, k, conn[k][j], l1[k]);
     }
     l2[j] = squash(sum);
+    printf("\nl2[%d] = %f", j, l2[j]);
   }
 }
 
@@ -261,11 +275,13 @@ int nj;
   int j;
   float o, t, errsum;
   errsum = 0.0;
+
   for (j = 1; j <= nj; j++) {
     o = output[j];
     t = target[j];
     delta[j] = o * (1.0 - o) * (t - o);
     errsum += ABS(delta[j]);
+    printf("\n\n***err***: %f\n\n", errsum);
   }
   *err = errsum;
 }
@@ -311,6 +327,7 @@ float *delta, *ly, **w, **oldw;
     for (k = 0; k <= nly; k++) {
       new_dw = ((ETA * delta[j] * ly[k]) + (MOMENTUM * oldw[k][j]));
 	  w[k][j] += new_dw;
+    printf("w[%d][%d] = %f\n", k, j, w[k][j]);
 	  oldw[k][j] = new_dw;
     }
   }

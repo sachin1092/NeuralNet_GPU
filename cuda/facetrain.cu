@@ -3,6 +3,7 @@
 #include <math.h>
 #include "backprop.h"
 #include "backprop_kernel.cu"
+#include "imagenet.cu"
 
 extern char *strcpy();
 extern void exit();
@@ -25,7 +26,7 @@ void bpnn_save_dbg(BPNN *net, const char *filename)
   w = net->hidden_weights;
   for (i = 0; i <= n2; i++) {
     for (j = 0; j <= n3; j++) {
-	  fprintf(pFile, "%d,%d,%f\n", i,j,w[i * n3 + j]);
+	  fprintf(pFile, "%d,%d,%f\n", i,j,w[i * (n3+1) + j]);
     }
   }
 
@@ -41,12 +42,29 @@ void backprop_face()
   float out_err, hid_err;
   net = bpnn_create(layer_size, 16, 1); // (16, 1 can not be changed)
   printf("Input layer size : %d\n", layer_size);
-  //load(net);
+  load(net);
   //entering the training kernel, only one iteration
+
+  BPNN *cudanet;
+
+  cudanet = createNetDevice(layer_size, 16, 1);
+  cudaDeviceSynchronize();
+
+  copyNetToDevice(net, cudanet, layer_size, 16, 1);
+  cudaDeviceSynchronize();
+
   printf("Starting training kernel\n");
-  bpnn_train_kernel(net, &out_err, &hid_err);
+  bpnn_train_kernel(cudanet, &out_err, &hid_err);
+  cudaDeviceSynchronize();
+
+  copyNetFromDevice(net, cudanet, layer_size, 16, 1);
+  cudaDeviceSynchronize();
+
   bpnn_save_dbg(net, "out.txt");
   bpnn_free(net);
+
+  // freeDeviceNet(net);
+
   printf("Training done\n");
 }
 

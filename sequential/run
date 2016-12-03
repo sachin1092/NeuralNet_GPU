@@ -1,1 +1,4 @@
-./backprop 16777216
+make clean
+make
+./backprop 16
+#16777216

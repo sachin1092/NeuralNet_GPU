@@ -75,4 +75,10 @@ void backprop_face();
 
 // BPNN_CUDA *bpnn_read();
 
+void launch_layerforward(float *l1, float *l2, float *conn, int n1, int n2);
+void launch_output_error(float *delta, float *target, float *output, int nj, float *err);
+BPNN *createNetDevice(int n_in, int n_hidden, int n_out);
+void copyNetToDevice(BPNN *net, BPNN *cudanet, int n_in, int n_hidden, int n_out);
+void copyNetFromDevice(BPNN *net, BPNN *cudanet, int n_in, int n_hidden, int n_out);
+
 #endif
