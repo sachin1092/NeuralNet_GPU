@@ -84,10 +84,10 @@ float *alloc_1d_dbl_device(int n)
 
 float *alloc_2d_dbl(int m, int n)
 {
-  int i;
+  // int i;
   float *new_var;
 
-  new_var = (float *) malloc ((unsigned) (m * n * sizeof (float *)));
+  new_var = (float *) malloc ((unsigned) (m * n * sizeof (float)));
   if (new_var == NULL) {
     printf("ALLOC_2D_DBL: Couldn't allocate array of dbl ptrs\n");
     return (NULL);
@@ -276,7 +276,7 @@ void bpnn_layerforward(float *l1, float *l2, float *conn, int n1, int n2)
     /*** Compute weighted sum of its inputs ***/
     sum = 0.0;
     for (k = 0; k <= n1; k++) {	
-      sum += conn[k * n2 + j] * l1[k]; 
+      sum += conn[j * n1 + k] * l1[k]; //k * n2 + j
     }
     l2[j] = squash(sum);
   }
@@ -328,9 +328,9 @@ void bpnn_adjust_weights(float *delta, int ndelta, float *ly, int nly,float *w, 
 
   for (j = 1; j <= ndelta; j++) {
     for (k = 0; k <= nly; k++) {
-      new_dw = ((ETA * delta[j] * ly[k]) + (MOMENTUM * oldw[k * ndelta + j]));
-      w[k * ndelta + j] += new_dw;
-      oldw[k * ndelta + j] = new_dw;
+      new_dw = ((ETA * delta[j] * ly[k]) + (MOMENTUM * oldw[j * nly + k])); //k * ndelta + j
+      w[j * nly + k] += new_dw;
+      oldw[j * nly + k] = new_dw;
     }
   }
 }
