@@ -14,7 +14,7 @@ int layer_size = 0;
 void bpnn_save_dbg(BPNN *net, const char *filename)
 {
   int n1, n2, n3, i, j;
-  float **w;
+  float *w;
 
   FILE *pFile;
   pFile = fopen( filename, "w+" );
@@ -25,7 +25,7 @@ void bpnn_save_dbg(BPNN *net, const char *filename)
   w = net->hidden_weights;
   for (i = 0; i <= n2; i++) {
     for (j = 0; j <= n3; j++) {
-	  fprintf(pFile, "%d,%d,%f\n", i,j,w[i][j]);
+	  fprintf(pFile, "%d,%d,%f\n", i,j,w[i * n3 + j]);
     }
   }
 
@@ -49,6 +49,7 @@ void backprop_face()
   bpnn_free(net);
   printf("Training done\n");
 }
+
 
 int setup(int argc, char *argv[])
 {

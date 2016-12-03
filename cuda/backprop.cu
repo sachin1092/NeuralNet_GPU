@@ -82,53 +82,54 @@ float *alloc_1d_dbl_device(int n)
 
 /*** Allocate 2d array of floats ***/
 
-float **alloc_2d_dbl(int m, int n)
+float *alloc_2d_dbl(int m, int n)
 {
   int i;
-  float **new_var;
+  float *new_var;
 
-  new_var = (float **) malloc ((unsigned) (m * sizeof (float *)));
+  new_var = (float *) malloc ((unsigned) (m * n * sizeof (float *)));
   if (new_var == NULL) {
     printf("ALLOC_2D_DBL: Couldn't allocate array of dbl ptrs\n");
     return (NULL);
   }
 
-  for (i = 0; i < m; i++) {
-    new_var[i] = alloc_1d_dbl(n);
-  }
+  // for (i = 0; i < m; i++) {
+  //   new_var[i] = alloc_1d_dbl(n);
+  // }
 
   return (new_var);
 }
 
 /*** Allocate 2d array of floats for device***/
 
-float **alloc_2d_dbl_device(int m, int n)
+float *alloc_2d_dbl_device(int m, int n)
 {
   int i;
-  float **new_var;
+  float *new_var;
 
-  cudaMalloc((void **) &new_var, sizeof(float *) * m);
+  cudaMalloc((void **) &new_var, sizeof(float) * m * n);
   // new_var = (float **) malloc ((unsigned) (m * sizeof (float *)));
   if (new_var == NULL) {
     printf("ALLOC_2D_DBL: Couldn't allocate array of dbl ptrs\n");
     return (NULL);
   }
 
-  for (i = 0; i < m; i++) {
-    new_var[i] = alloc_1d_dbl_device(n);
-  }
+  // for (i = 0; i < m; i++) {
+    // new_var[i] = alloc_1d_dbl_device(n);
+    // cudaMalloc(&new_var[i], sizeof(float) * n);
+  // }
 
   return (new_var);
 }
 
 
-void bpnn_randomize_weights(float **w, int m, int n)
+void bpnn_randomize_weights(float *w, int m, int n)
 {
   int i, j;
 
   for (i = 0; i <= m; i++) {
     for (j = 0; j <= n; j++) {
-     w[i][j] = (float) rand()/RAND_MAX;
+     w[i * n + j] = (float) rand()/RAND_MAX;
     //  w[i][j] = dpn1();
     }
   }
@@ -139,18 +140,18 @@ void bpnn_randomize_row(float *w, int m)
 	int i;
 	for (i = 0; i <= m; i++) {
      //w[i] = (float) rand()/RAND_MAX;
-	 w[i] = 0.1;
-    }
+    w[i] = 0.1;
+  }
 }
 
 
-void bpnn_zero_weights(float **w, int m, int n)
+void bpnn_zero_weights(float *w, int m, int n)
 {
   int i, j;
 
   for (i = 0; i <= m; i++) {
     for (j = 0; j <= n; j++) {
-      w[i][j] = 0.0;
+      w[i * n + j] = 0.0;
     }
   }
 }
@@ -189,7 +190,7 @@ BPNN *bpnn_internal_create(int n_in, int n_hidden, int n_out)
 
   newnet->input_weights = alloc_2d_dbl(n_in + 1, n_hidden + 1);
   
-  // float **test2 = alloc_2d_dbl_device(n_in + 1, n_hidden + 1);
+  // float *test2 = alloc_2d_dbl_device(n_in + 1, n_hidden + 1);
   
   newnet->hidden_weights = alloc_2d_dbl(n_hidden + 1, n_out + 1);
 
@@ -215,17 +216,17 @@ void bpnn_free(BPNN *net)
   free((char *) net->output_delta);
   free((char *) net->target);
 
-  for (i = 0; i <= n1; i++) {
-    free((char *) net->input_weights[i]);
-    free((char *) net->input_prev_weights[i]);
-  }
+  // for (i = 0; i <= n1; i++) {
+    // free((char *) net->input_weights[i]);
+    // free((char *) net->input_prev_weights[i]);
+  // }
   free((char *) net->input_weights);
   free((char *) net->input_prev_weights);
 
-  for (i = 0; i <= n2; i++) {
-    free((char *) net->hidden_weights[i]);
-    free((char *) net->hidden_prev_weights[i]);
-  }
+  // for (i = 0; i <= n2; i++) {
+    // free((char *) net->hidden_weights[i]);
+    // free((char *) net->hidden_prev_weights[i]);
+  // }
   free((char *) net->hidden_weights);
   free((char *) net->hidden_prev_weights);
 
@@ -262,7 +263,7 @@ BPNN *bpnn_create(int n_in, int n_hidden, int n_out)
 }
 
 
-void bpnn_layerforward(float *l1, float *l2, float **conn, int n1, int n2)
+void bpnn_layerforward(float *l1, float *l2, float *conn, int n1, int n2)
 {
   float sum;
   int j, k;
@@ -275,7 +276,7 @@ void bpnn_layerforward(float *l1, float *l2, float **conn, int n1, int n2)
     /*** Compute weighted sum of its inputs ***/
     sum = 0.0;
     for (k = 0; k <= n1; k++) {	
-      sum += conn[k][j] * l1[k]; 
+      sum += conn[k * n2 + j] * l1[k]; 
     }
     l2[j] = squash(sum);
   }
@@ -298,7 +299,7 @@ void bpnn_output_error(float *delta, float *target, float *output, int nj, float
 
 
 void bpnn_hidden_error(float *delta_h, int nh, float *delta_o, 
-  int no, float **who, float *hidden, float *err)
+  int no, float *who, float *hidden, float *err)
 {
   int j, k;
   float h, sum, errsum;
@@ -308,7 +309,7 @@ void bpnn_hidden_error(float *delta_h, int nh, float *delta_o,
     h = hidden[j];
     sum = 0.0;
     for (k = 1; k <= no; k++) {
-      sum += delta_o[k] * who[j][k];
+      sum += delta_o[k] * who[j * no + k];
     }
     delta_h[j] = h * (1.0 - h) * sum;
     errsum += ABS(delta_h[j]);
@@ -317,7 +318,7 @@ void bpnn_hidden_error(float *delta_h, int nh, float *delta_o,
 }
 
 
-void bpnn_adjust_weights(float *delta, int ndelta, float *ly, int nly,float **w, float **oldw)
+void bpnn_adjust_weights(float *delta, int ndelta, float *ly, int nly,float *w, float *oldw)
 {
   float new_dw;
   int k, j;
@@ -327,9 +328,9 @@ void bpnn_adjust_weights(float *delta, int ndelta, float *ly, int nly,float **w,
 
   for (j = 1; j <= ndelta; j++) {
     for (k = 0; k <= nly; k++) {
-      new_dw = ((ETA * delta[j] * ly[k]) + (MOMENTUM * oldw[k][j]));
-	  w[k][j] += new_dw;
-	  oldw[k][j] = new_dw;
+      new_dw = ((ETA * delta[j] * ly[k]) + (MOMENTUM * oldw[k * ndelta + j]));
+      w[k * ndelta + j] += new_dw;
+      oldw[k * ndelta + j] = new_dw;
     }
   }
 }
@@ -386,116 +387,116 @@ void bpnn_train(BPNN *net, float *eo, float *eh)
 
 
 
-void bpnn_save(BPNN *net, char *filename)
-{
-  int n1, n2, n3, i, j, memcnt;
-  float dvalue, **w;
-  char *mem;
-  ///add//
-  FILE *pFile;
-  pFile = fopen( filename, "w+" );
-  ///////
-  /*
-  if ((fd = creat(filename, 0644)) == -1) {
-    printf("BPNN_SAVE: Cannot create '%s'\n", filename);
-    return;
-  }
-  */
+// void bpnn_save(BPNN *net, char *filename)
+// {
+//   int n1, n2, n3, i, j, memcnt;
+//   float dvalue, **w;
+//   char *mem;
+//   ///add//
+//   FILE *pFile;
+//   pFile = fopen( filename, "w+" );
+//   ///////
+//   /*
+//   if ((fd = creat(filename, 0644)) == -1) {
+//     printf("BPNN_SAVE: Cannot create '%s'\n", filename);
+//     return;
+//   }
+//   */
 
-  n1 = net->input_n;  n2 = net->hidden_n;  n3 = net->output_n;
-  printf("Saving %dx%dx%d network to '%s'\n", n1, n2, n3, filename);
-  //fflush(stdout);
+//   n1 = net->input_n;  n2 = net->hidden_n;  n3 = net->output_n;
+//   printf("Saving %dx%dx%d network to '%s'\n", n1, n2, n3, filename);
+//   //fflush(stdout);
 
-  //write(fd, (char *) &n1, sizeof(int));
-  //write(fd, (char *) &n2, sizeof(int));
-  //write(fd, (char *) &n3, sizeof(int));
+//   //write(fd, (char *) &n1, sizeof(int));
+//   //write(fd, (char *) &n2, sizeof(int));
+//   //write(fd, (char *) &n3, sizeof(int));
 
-  fwrite( (char *) &n1 , sizeof(char), sizeof(char), pFile);
-  fwrite( (char *) &n2 , sizeof(char), sizeof(char), pFile);
-  fwrite( (char *) &n3 , sizeof(char), sizeof(char), pFile);
+//   fwrite( (char *) &n1 , sizeof(char), sizeof(char), pFile);
+//   fwrite( (char *) &n2 , sizeof(char), sizeof(char), pFile);
+//   fwrite( (char *) &n3 , sizeof(char), sizeof(char), pFile);
   
-  memcnt = 0;
-  w = net->input_weights;
-  mem = (char *) malloc ((unsigned) ((n1+1) * (n2+1) * sizeof(float)));
-  for (i = 0; i <= n1; i++) {
-    for (j = 0; j <= n2; j++) {
-      dvalue = w[i][j];
-      fastcopy(&mem[memcnt], &dvalue, sizeof(float));
-      memcnt += sizeof(float);
-    }
-  }
-  //write(fd, mem, (n1+1) * (n2+1) * sizeof(float));
-  fwrite( mem , (unsigned)(sizeof(float)), (unsigned) ((n1+1) * (n2+1) * sizeof(float)) , pFile);
-  free(mem);
+//   memcnt = 0;
+//   w = net->input_weights;
+//   mem = (char *) malloc ((unsigned) ((n1+1) * (n2+1) * sizeof(float)));
+//   for (i = 0; i <= n1; i++) {
+//     for (j = 0; j <= n2; j++) {
+//       dvalue = w[i][j];
+//       fastcopy(&mem[memcnt], &dvalue, sizeof(float));
+//       memcnt += sizeof(float);
+//     }
+//   }
+//   //write(fd, mem, (n1+1) * (n2+1) * sizeof(float));
+//   fwrite( mem , (unsigned)(sizeof(float)), (unsigned) ((n1+1) * (n2+1) * sizeof(float)) , pFile);
+//   free(mem);
 
-  memcnt = 0;
-  w = net->hidden_weights;
-  mem = (char *) malloc ((unsigned) ((n2+1) * (n3+1) * sizeof(float)));
-  for (i = 0; i <= n2; i++) {
-    for (j = 0; j <= n3; j++) {
-      dvalue = w[i][j];
-      fastcopy(&mem[memcnt], &dvalue, sizeof(float));
-      memcnt += sizeof(float);
-    }
-  }
-  //write(fd, mem, (n2+1) * (n3+1) * sizeof(float));
-  fwrite( mem , sizeof(float), (unsigned) ((n2+1) * (n3+1) * sizeof(float)) , pFile);
-  free(mem);
+//   memcnt = 0;
+//   w = net->hidden_weights;
+//   mem = (char *) malloc ((unsigned) ((n2+1) * (n3+1) * sizeof(float)));
+//   for (i = 0; i <= n2; i++) {
+//     for (j = 0; j <= n3; j++) {
+//       dvalue = w[i][j];
+//       fastcopy(&mem[memcnt], &dvalue, sizeof(float));
+//       memcnt += sizeof(float);
+//     }
+//   }
+//   //write(fd, mem, (n2+1) * (n3+1) * sizeof(float));
+//   fwrite( mem , sizeof(float), (unsigned) ((n2+1) * (n3+1) * sizeof(float)) , pFile);
+//   free(mem);
 
-  fclose(pFile);
-  return;
-}
+//   fclose(pFile);
+//   return;
+// }
 
 
-BPNN *bpnn_read(char *filename)
-{
-  char *mem;
-  BPNN *new_var;
-  int fd, n1, n2, n3, i, j, memcnt;
+// BPNN *bpnn_read(char *filename)
+// {
+//   char *mem;
+//   BPNN *new_var;
+//   int fd, n1, n2, n3, i, j, memcnt;
 
-  if ((fd = open(filename, 0, 0644)) == -1) {   ///***check??
-    return (NULL);
-  }
+//   if ((fd = open(filename, 0, 0644)) == -1) {   ///***check??
+//     return (NULL);
+//   }
 
-  printf("Reading '%s'\n", filename);  //fflush(stdout);
+//   printf("Reading '%s'\n", filename);  //fflush(stdout);
 
-  read(fd, (char *) &n1, sizeof(int));
-  read(fd, (char *) &n2, sizeof(int));
-  read(fd, (char *) &n3, sizeof(int));
-  new_var = bpnn_internal_create(n1, n2, n3);
+//   read(fd, (char *) &n1, sizeof(int));
+//   read(fd, (char *) &n2, sizeof(int));
+//   read(fd, (char *) &n3, sizeof(int));
+//   new_var = bpnn_internal_create(n1, n2, n3);
 
-  printf("'%s' contains a %dx%dx%d network\n", filename, n1, n2, n3);
-  printf("Reading input weights...");  //fflush(stdout);
+//   printf("'%s' contains a %dx%dx%d network\n", filename, n1, n2, n3);
+//   printf("Reading input weights...");  //fflush(stdout);
 
-  memcnt = 0;
-  mem = (char *) malloc ((unsigned) ((n1+1) * (n2+1) * sizeof(float)));
-  read(fd, mem, (n1+1) * (n2+1) * sizeof(float));
-  for (i = 0; i <= n1; i++) {
-    for (j = 0; j <= n2; j++) {
-      fastcopy(&(new_var->input_weights[i][j]), &mem[memcnt], sizeof(float));
-      memcnt += sizeof(float);
-    }
-  }
-  free(mem);
+//   memcnt = 0;
+//   mem = (char *) malloc ((unsigned) ((n1+1) * (n2+1) * sizeof(float)));
+//   read(fd, mem, (n1+1) * (n2+1) * sizeof(float));
+//   for (i = 0; i <= n1; i++) {
+//     for (j = 0; j <= n2; j++) {
+//       fastcopy(&(new_var->input_weights[i][j]), &mem[memcnt], sizeof(float));
+//       memcnt += sizeof(float);
+//     }
+//   }
+//   free(mem);
 
-  printf("Done\nReading hidden weights...");  //fflush(stdout);
+//   printf("Done\nReading hidden weights...");  //fflush(stdout);
 
-  memcnt = 0;
-  mem = (char *) malloc ((unsigned) ((n2+1) * (n3+1) * sizeof(float)));
-  read(fd, mem, (n2+1) * (n3+1) * sizeof(float));
-  for (i = 0; i <= n2; i++) {
-    for (j = 0; j <= n3; j++) {
-      fastcopy(&(new_var->hidden_weights[i][j]), &mem[memcnt], sizeof(float));
-      memcnt += sizeof(float);
-    }
-  }
-  free(mem);
-  close(fd);
+//   memcnt = 0;
+//   mem = (char *) malloc ((unsigned) ((n2+1) * (n3+1) * sizeof(float)));
+//   read(fd, mem, (n2+1) * (n3+1) * sizeof(float));
+//   for (i = 0; i <= n2; i++) {
+//     for (j = 0; j <= n3; j++) {
+//       fastcopy(&(new_var->hidden_weights[i][j]), &mem[memcnt], sizeof(float));
+//       memcnt += sizeof(float);
+//     }
+//   }
+//   free(mem);
+//   close(fd);
 
-  printf("Done\n");  //fflush(stdout);
+//   printf("Done\n");  //fflush(stdout);
 
-  bpnn_zero_weights(new_var->input_prev_weights, n1, n2);
-  bpnn_zero_weights(new_var->hidden_prev_weights, n2, n3);
+//   bpnn_zero_weights(new_var->input_prev_weights, n1, n2);
+//   bpnn_zero_weights(new_var->hidden_prev_weights, n2, n3);
 
-  return (new_var);
-}
+//   return (new_var);
+// }
