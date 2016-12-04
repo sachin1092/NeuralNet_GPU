@@ -6,10 +6,6 @@
 
 #include "backprop.h"
 
-#define TILE_SIZE 16
-
-#define ABS(x)          (((x) > 0.0) ? (x) : (-(x)))
-
 ////////////////////////////////////////////////////////////////////////////////
 
 extern void bpnn_layerforward(float *l1, float *l2, float *conn, int n1, int n2);
@@ -33,6 +29,11 @@ double gettime() {
   return t.tv_sec+t.tv_usec*1e-6;
 }
 
+typedef struct {
+    struct timeval startTime;
+    struct timeval endTime;
+} Timer;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Program main
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,9 +42,18 @@ int main( int argc, char** argv)
   setup(argc, argv);
 }
 
+void startTime(Timer* timer) {
+    gettimeofday(&(timer->startTime), NULL);
+}
 
+void stopTime(Timer* timer) {
+    gettimeofday(&(timer->endTime), NULL);
+}
 
-
+float elapsedTime(Timer timer) {
+    return ((float) ((timer.endTime.tv_sec - timer.startTime.tv_sec) \
+                + (timer.endTime.tv_usec - timer.startTime.tv_usec)/1.0e6));
+}
 
 void bpnn_train_kernel(BPNN *net, float *eo, float *eh)
 {
@@ -53,35 +63,25 @@ void bpnn_train_kernel(BPNN *net, float *eo, float *eh)
   in = net->input_n;
   hid = net->hidden_n;
   out = net->output_n;   
+
+  Timer timer;
    
-  printf("Performing CPU computationsssss\n");
+  printf("Performing CPU computation\n");
 
-  // cudaError_t cuda_ret;
-  printf("\n\n***************Before\n");
-  // for (int i = 0; i < hid + 1; ++i)
-  // {
-  //   /* code */
-  //   printf("\nl2[%d] = %f", i, net->hidden_units[i]);
-  // }
+  startTime(&timer);
 
-  /*cuda_ret = */launch_layerforward(net->input_units, net->hidden_units, net->input_weights, in + 1, hid + 1);
-  // cuda_ret = cudaDeviceSynchronize();
-  // if(cuda_ret != cudaSuccess) FATAL("Unable to launch kernel");
-
-  printf("\n\n***************After\n");
-  // for (int i = 0; i < hid + 1; ++i)
-  // {
-    /* code */
-    // printf("\nl2[%d] = %f", i, net->hidden_units[i]);
-  // }
+  launch_layerforward(net->input_units, net->hidden_units, net->input_weights, in + 1, hid + 1);
 
   launch_layerforward(net->hidden_units, net->output_units, net->hidden_weights, hid + 1, out + 1);
   
   launch_output_error(net->output_delta, net->target, net->output_units, out + 1, &out_err);
+
+  launch_hidden_error(net->hidden_delta, hid + 1, net->output_delta, out + 1, net->hidden_weights, net->hidden_units, &hid_err);
   
-  // bpnn_hidden_error(net->hidden_delta, hid, net->output_delta, out, net->hidden_weights, net->hidden_units, &hid_err);  
-  // bpnn_adjust_weights(net->output_delta, out, net->hidden_units, hid, net->hidden_weights, net->hidden_prev_weights);
-  // bpnn_adjust_weights(net->hidden_delta, hid, net->input_units, in, net->input_weights, net->input_prev_weights);
+  launch_adjust_weights(net->output_delta, out + 1, net->hidden_units, hid + 1, net->hidden_weights, net->hidden_prev_weights);
+
+  launch_adjust_weights(net->hidden_delta, hid + 1, net->input_units, in + 1, net->input_weights, net->input_prev_weights);
+
+  stopTime(&timer); printf("Total Time Taken: %f s\n", elapsedTime(timer));
 
 }
-

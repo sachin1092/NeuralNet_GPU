@@ -77,8 +77,13 @@ void backprop_face();
 
 void launch_layerforward(float *l1, float *l2, float *conn, int n1, int n2);
 void launch_output_error(float *delta, float *target, float *output, int nj, float *err);
+void launch_hidden_error(float *delta_h, int nh, float *delta_o, 
+  int no, float *who, float *hidden, float *err);
+void launch_adjust_weights(float *delta, int ndelta, float *ly, int nly,float *w, float *oldw);
+
 BPNN *createNetDevice(int n_in, int n_hidden, int n_out);
 void copyNetToDevice(BPNN *net, BPNN *cudanet, int n_in, int n_hidden, int n_out);
 void copyNetFromDevice(BPNN *net, BPNN *cudanet, int n_in, int n_hidden, int n_out);
+void freeDeviceNet(BPNN *net);
 
 #endif

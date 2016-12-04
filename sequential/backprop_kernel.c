@@ -38,6 +38,23 @@ main( int argc, char** argv)
 	setup(argc, argv);
 }
 
+typedef struct {
+    struct timeval startTime;
+    struct timeval endTime;
+} Timer;
+
+void startTime(Timer* timer) {
+    gettimeofday(&(timer->startTime), NULL);
+}
+
+void stopTime(Timer* timer) {
+    gettimeofday(&(timer->endTime), NULL);
+}
+
+float elapsedTime(Timer timer) {
+    return ((float) ((timer.endTime.tv_sec - timer.startTime.tv_sec) \
+                + (timer.endTime.tv_usec - timer.startTime.tv_usec)/1.0e6));
+}
 
 void bpnn_train_kernel(BPNN *net, float *eo, float *eh)
 {
@@ -47,14 +64,21 @@ void bpnn_train_kernel(BPNN *net, float *eo, float *eh)
   in = net->input_n;
   hid = net->hidden_n;
   out = net->output_n;   
+
+  Timer timer;
    
   printf("Performing CPU computation\n");
+
+  startTime(&timer);
+  
   bpnn_layerforward(net->input_units, net->hidden_units,net->input_weights, in, hid);
   bpnn_layerforward(net->hidden_units, net->output_units, net->hidden_weights, hid, out);
   bpnn_output_error(net->output_delta, net->target, net->output_units, out, &out_err);
-  printf("\n\n\nerr: %f\n\n", out_err);
+  // printf("\n\n\nerr: %f\n\n", out_err);
   bpnn_hidden_error(net->hidden_delta, hid, net->output_delta, out, net->hidden_weights, net->hidden_units, &hid_err);  
   bpnn_adjust_weights(net->output_delta, out, net->hidden_units, hid, net->hidden_weights, net->hidden_prev_weights);
-  // bpnn_adjust_weights(net->hidden_delta, hid, net->input_units, in, net->input_weights, net->input_prev_weights);
+  bpnn_adjust_weights(net->hidden_delta, hid, net->input_units, in, net->input_weights, net->input_prev_weights);
+
+  stopTime(&timer); printf("Total Time Taken: %f s\n", elapsedTime(timer));
 
 }

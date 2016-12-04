@@ -244,12 +244,12 @@ int n1, n2;
   float sum;
   int j, k;
 
-  for (k = 0 ; k <= n1 ; k++)
-    printf("\nl1[%d] = %f", k, l1[k]);
+  // for (k = 0 ; k <= n1 ; k++)
+    // printf("\nl1[%d] = %f", k, l1[k]);
 
-  for (j = 1 ; j <= n2 ; j++)
-    for (k = 0 ; k <= n1 ; k++)
-      printf("\nconn[%d][%d] = %f", k, j, conn[k][j]);
+  // for (j = 1 ; j <= n2 ; j++)
+    // for (k = 0 ; k <= n1 ; k++)
+      // printf("\nconn[%d][%d] = %f", k, j, conn[k][j]);
 
   /*** Set up thresholding unit ***/
   l1[0] = 1.0;
@@ -263,7 +263,7 @@ int n1, n2;
       // printf("\nconn[%d][%d] * l1[%d] = %f * %f", k, j, k, conn[k][j], l1[k]);
     }
     l2[j] = squash(sum);
-    printf("\nl2[%d] = %f", j, l2[j]);
+    // printf("\nl2[%d] = %f", j, l2[j]);
   }
 }
 
@@ -281,7 +281,7 @@ int nj;
     t = target[j];
     delta[j] = o * (1.0 - o) * (t - o);
     errsum += ABS(delta[j]);
-    printf("\n\n***err***: %f\n\n", errsum);
+    // printf("\n\n***err***: %f\n\n", errsum);
   }
   *err = errsum;
 }
@@ -308,6 +308,7 @@ int nh, no;
       sum += delta_o[k] * who[j][k];
     }
     delta_h[j] = h * (1.0 - h) * sum;
+    // printf("\n\ndelta_h[%d] = %f\n\n", j, ABS(delta_h[j]));
     errsum += ABS(delta_h[j]);
   }
   *err = errsum;
@@ -327,7 +328,7 @@ float *delta, *ly, **w, **oldw;
     for (k = 0; k <= nly; k++) {
       new_dw = ((ETA * delta[j] * ly[k]) + (MOMENTUM * oldw[k][j]));
 	  w[k][j] += new_dw;
-    printf("w[%d][%d] = %f\n", k, j, w[k][j]);
+    // printf("w[%d][%d] = %f\n", k, j, w[k][j]);
 	  oldw[k][j] = new_dw;
     }
   }

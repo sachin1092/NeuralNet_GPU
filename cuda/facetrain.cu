@@ -26,7 +26,7 @@ void bpnn_save_dbg(BPNN *net, const char *filename)
   w = net->hidden_weights;
   for (i = 0; i <= n2; i++) {
     for (j = 0; j <= n3; j++) {
-	  fprintf(pFile, "%d,%d,%f\n", i,j,w[i * (n3+1) + j]);
+      fprintf(pFile, "%d,%d,%f\n", i, j, w[i * (n3+1) + j]);
     }
   }
 
@@ -63,7 +63,7 @@ void backprop_face()
   bpnn_save_dbg(net, "out.txt");
   bpnn_free(net);
 
-  // freeDeviceNet(net);
+  freeDeviceNet(cudanet);
 
   printf("Training done\n");
 }
