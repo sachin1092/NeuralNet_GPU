@@ -19,7 +19,7 @@
 
 #define ABS(x)          (((x) > 0.0) ? (x) : (-(x)))
 
-#define TILE_SIZE 256
+#define TILE_SIZE 8
 
 /*** Allocate 1d array of floats ***/
 
