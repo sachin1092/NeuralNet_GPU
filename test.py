@@ -1,13 +1,14 @@
 from subprocess import call
 import os
-from time import time
+from time import time, sleep
+
 
 def check(weights_seq, weights_cuda):
     relativeTolerance = 1e-6
 
     for i in xrange(len(weights_seq)):
         relativeError = weights_cuda[i] - weights_seq[i]
-        print "Comparing, cuda:", weights_cuda[i], "seq:", weights_seq[i], "Diff:", relativeError
+        # print "Comparing, cuda:", weights_cuda[i], "seq:", weights_seq[i], "Diff:", relativeError
         if (relativeError > relativeTolerance) or (relativeError < -relativeTolerance):
             print "Failed."
             return
@@ -22,11 +23,14 @@ if __name__ == "__main__":
 
     os.chdir("cuda")
 
-    # t1 = time()
+    print "\n\n***Cleaning***\n\n"
+    call(["make clean"], shell=True)
 
+    print "\n\n***Make***\n\n"
+    call(["make"], shell=True)
+
+    print "\n\n***Running***\n\n"
     call(["./run"], shell=True)
-
-    # cuda_time = time() - t1
 
     with open("out.txt", "r") as f:
         for line in f.readlines()[1:]:
@@ -36,18 +40,17 @@ if __name__ == "__main__":
 
     os.chdir("../sequential")
 
-    # t1 = time()
+    print "\n\n***Cleaning***\n\n"
+    call(["make clean"], shell=True)
 
+    print "\n\n***Cleaning***\n\n"
+    call(["make"], shell=True)
+    
+    print "\n\n***Running***\n\n"
     call(["./run"], shell=True)
-
-    # seq_time = time() - t1
 
     with open("out.txt", "r") as f:
         for line in f.readlines()[1:]:
             weights_seq.append(float(line.split(",")[2]))
 
-    print "cuda", weights_cuda#, "time: ", cuda_time
-    print "seq", weights_seq#, "time:", seq_time
-
-    
     check(weights_seq, weights_cuda)
