@@ -43,7 +43,7 @@ if __name__ == "__main__":
     print "\n\n***Cleaning***\n\n"
     call(["make clean"], shell=True)
 
-    print "\n\n***Cleaning***\n\n"
+    print "\n\n***Make***\n\n"
     call(["make"], shell=True)
     
     print "\n\n***Running***\n\n"

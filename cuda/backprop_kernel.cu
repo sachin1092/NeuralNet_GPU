@@ -66,7 +66,7 @@ void bpnn_train_kernel(BPNN *net, float *eo, float *eh)
 
   Timer timer;
    
-  printf("Performing CPU computation\n");
+  printf("Performing GPU computation\n");
 
   startTime(&timer);
 

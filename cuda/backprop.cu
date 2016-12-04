@@ -233,6 +233,8 @@ void launch_output_error(float *delta, float *target, float *output, int nj, flo
 
   cudaMemcpy(err, err_cuda, sizeof(float), cudaMemcpyDeviceToHost);
 
+  cudaFree(err_cuda);
+
 }
 
 __global__ void hidden_error(float *delta_h, int nh, float *delta_o, 
@@ -275,6 +277,8 @@ void launch_hidden_error(float *delta_h, int nh, float *delta_o,
   hidden_error<<<DimGrid, DimBlock>>>(delta_h, nh, delta_o, no, who, hidden, err_cuda); 
 
   cudaMemcpy(err, err_cuda, sizeof(float), cudaMemcpyDeviceToHost);
+
+  cudaFree(err_cuda);
 
 }
 
